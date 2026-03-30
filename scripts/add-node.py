@@ -69,10 +69,10 @@ API_URL          = os.environ.get("REMNAWAVE_API_URL", "https://rem.bereg.bond")
 API_TOKEN        = os.environ.get("REMNAWAVE_API_TOKEN", "")
 CF_API_TOKEN     = os.environ.get("CF_API_TOKEN", "")
 CF_ZONE_ID       = os.environ.get("CF_ZONE_ID", "")
-ANSIBLE_KEY_FILE = os.environ.get("ANSIBLE_KEY_FILE", "/home/ansible/.ssh/id_ed25519")
+ANSIBLE_KEY_FILE = os.environ.get("ANSIBLE_KEY_FILE", "/home/ops/.ssh/ansible_key")
 
 PROMETHEUS_SD_FILE = "/opt/monitoring_server/node-exporter-sd.yml"
-WHITEBOX_SCRIPT    = "/opt/bereg-ops/gen-whitebox-targets.py"
+WHITEBOX_SCRIPT    = "/home/ops/bereg-ops/scripts/gen-whitebox-targets.py"
 WHITEBOX_ENV       = "/opt/whitebox/.env"
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
