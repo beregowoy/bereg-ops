@@ -1,0 +1,121 @@
+{
+  "log": {
+    "loglevel": "info"
+  },
+  "inbounds": [
+    {
+      "tag": "RU_FULL_IN",
+      "port": 443,
+      "listen": "0.0.0.0",
+      "protocol": "vless",
+      "settings": {
+        "clients": [],
+        "decryption": "none"
+      },
+      "sniffing": {
+        "enabled": true,
+        "routeOnly": false,
+        "destOverride": ["http", "tls", "quic", "fakedns"],
+        "metadataOnly": false
+      },
+      "streamSettings": {
+        "network": "raw",
+        "security": "reality",
+        "tcpSettings": {
+          "header": { "type": "none" },
+          "acceptProxyProtocol": false
+        },
+        "realitySettings": {
+          "dest": "9443",
+          "show": false,
+          "xver": 0,
+          "spiderX": "/",
+          "shortIds": [""],
+          "publicKey": "fkZTYNydTBVO-1LSiTvDcyBMx-zBP5Am780jECmUgg0",
+          "privateKey": "sheuiIBMLPLeNoEV5bJnzYUxjhtv5h1xo57OB1BbBGQ",
+          "fingerprint": "chrome",
+          "serverNames": ["mskfb.bopen.bond"]
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "DIRECT",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "BLOCK",
+      "protocol": "blackhole"
+    },
+    {
+      "tag": "SS_B1",
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "93.152.207.69",
+            "port": 9999,
+            "method": "chacha20-ietf-poly1305",
+            "password": "U8BfCAydYdUrBefzoYekUB04f-hRqWm1",
+            "level": 0
+          }
+        ]
+      }
+    },
+    {
+      "tag": "SS_B2",
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "178.17.53.155",
+            "port": 9999,
+            "method": "chacha20-ietf-poly1305",
+            "password": "U8BfCAydYdUrBefzoYekUB04f-hRqWm1",
+            "level": 0
+          }
+        ]
+      }
+    }
+  ],
+  "observatory": {
+    "subjectSelector": ["SS_B"],
+    "probeInterval": "30s",
+    "probeURL": "https://1.1.1.1/cdn-cgi/trace",
+    "enableConcurrency": true
+  },
+  "routing": {
+    "balancers": [
+      {
+        "tag": "SS_BALANCER",
+        "selector": ["SS_B"],
+        "strategy": {
+          "type": "leastload"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "domain": ["geosite:private"],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "protocol": ["bittorrent"],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "inboundTag": ["RU_FULL_IN"],
+        "balancerTag": "SS_BALANCER"
+      }
+    ]
+  }
+}

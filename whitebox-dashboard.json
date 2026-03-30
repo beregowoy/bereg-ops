@@ -1,0 +1,133 @@
+{
+  "dashboard": {
+    "title": "Whitebox VPN Probes",
+    "tags": ["whitebox", "vpn", "monitoring"],
+    "timezone": "browser",
+    "refresh": "1m",
+    "time": { "from": "now-3h", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "VPN Nodes Status",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+        "targets": [
+          { "expr": "count(tun_probe_success{job=\"whitebox\"} == 1)", "legendFormat": "UP", "refId": "A" },
+          { "expr": "count(tun_probe_success{job=\"whitebox\"} == 0)", "legendFormat": "DOWN", "refId": "B" },
+          { "expr": "count(tun_probe_success{job=\"whitebox\"})", "legendFormat": "Total", "refId": "C" }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          },
+          "overrides": [
+            { "matcher": { "id": "byName", "options": "DOWN" }, "properties": [{ "id": "thresholds", "value": { "mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}] } }] },
+            { "matcher": { "id": "byName", "options": "Total" }, "properties": [{ "id": "thresholds", "value": { "mode": "absolute", "steps": [{"color": "blue", "value": null}] } }] }
+          ]
+        },
+        "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto", "colorMode": "background" },
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      },
+      {
+        "id": 2,
+        "title": "Node Status Table",
+        "type": "table",
+        "gridPos": { "h": 12, "w": 24, "x": 0, "y": 4 },
+        "targets": [
+          { "expr": "tun_probe_success{job=\"whitebox\"}", "format": "table", "instant": true, "refId": "A" },
+          { "expr": "tun_probe_duration_seconds{job=\"whitebox\"}", "format": "table", "instant": true, "refId": "B" },
+          { "expr": "tun_probe_http_status_code{job=\"whitebox\"}", "format": "table", "instant": true, "refId": "C" }
+        ],
+        "transformations": [
+          { "id": "joinByField", "options": { "byField": "client", "mode": "outer" } },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true, "Time 1": true, "Time 2": true, "Time 3": true,
+                "__name__": true, "__name__ 1": true, "__name__ 2": true, "__name__ 3": true,
+                "instance": true, "instance 1": true, "instance 2": true, "instance 3": true,
+                "job": true, "job 1": true, "job 2": true, "job 3": true,
+                "target": true, "target 1": true, "target 2": true, "target 3": true,
+                "address 1": true, "address 2": true, "address 3": true,
+                "protocol 1": true, "protocol 2": true, "protocol 3": true,
+                "client 1": true, "client 2": true, "client 3": true
+              },
+              "renameByName": {
+                "client": "Node",
+                "address": "IP",
+                "protocol": "Protocol",
+                "Value #A": "Status",
+                "Value #B": "Duration (s)",
+                "Value #C": "HTTP Code"
+              }
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Status" },
+              "properties": [
+                { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+                { "id": "thresholds", "value": { "mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}] } },
+                { "id": "mappings", "value": [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red"}, "1": {"text": "UP", "color": "green"}}}] }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Duration (s)" },
+              "properties": [
+                { "id": "unit", "value": "s" },
+                { "id": "decimals", "value": 2 },
+                { "id": "thresholds", "value": { "mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 5}, {"color": "red", "value": 15}] } },
+                { "id": "custom.cellOptions", "value": { "type": "color-text" } }
+              ]
+            }
+          ]
+        },
+        "options": { "sortBy": [{ "displayName": "Status", "desc": false }] },
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      },
+      {
+        "id": 3,
+        "title": "Probe Duration by Node",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+        "targets": [
+          { "expr": "tun_probe_duration_seconds{job=\"whitebox\"}", "legendFormat": "{{client}}", "refId": "A" }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 15 }] },
+            "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10, "pointSize": 5, "showPoints": "auto" }
+          }
+        },
+        "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] } },
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      },
+      {
+        "id": 4,
+        "title": "Probe Success Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+        "targets": [
+          { "expr": "tun_probe_success{job=\"whitebox\"}", "legendFormat": "{{client}}", "refId": "A" }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0, "max": 1,
+            "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
+            "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20 },
+            "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }]
+          }
+        },
+        "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull"] } },
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      }
+    ],
+    "schemaVersion": 39
+  },
+  "overwrite": true
+}

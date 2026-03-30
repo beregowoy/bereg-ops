@@ -1,0 +1,252 @@
+Нам необходимо разобраться и улучшить архитекрутуру ВПН-нод. Сейчас всё работает, но нужно иметь какой-то план расширения с учетом нагрузки.
+
+У меня уже есть: ноды с SELF-STEAL: LT-SLF-01 LT-SLF-02 (везде где SLF) Их конфиг: 
+{
+  "log": {
+    "loglevel": "info"
+  },
+  "inbounds": [
+    {
+      "tag": "REALITY_RAW_SLF",
+      "port": 443,
+      "listen": "0.0.0.0",
+      "protocol": "vless",
+      "settings": {
+        "clients": [],
+        "decryption": "none"
+      },
+      "sniffing": {
+        "enabled": true,
+        "routeOnly": false,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic",
+          "fakedns"
+        ],
+        "metadataOnly": false
+      },
+      "streamSettings": {
+        "network": "raw",
+        "security": "reality",
+        "tcpSettings": {
+          "header": {
+            "type": "none"
+          },
+          "acceptProxyProtocol": false
+        },
+        "realitySettings": {
+          "dest": "9443",
+          "show": false,
+          "xver": 0,
+          "spiderX": "/",
+          "shortIds": [
+            ""
+          ],
+          "publicKey": "fkZTYNydTBVO-1LSiTvDcyBMx-zBP5Am780jECmUgg0",
+          "privateKey": "sheuiIBMLPLeNoEV5bJnzYUxjhtv5h1xo57OB1BbBGQ",
+          "fingerprint": "chrome",
+          "serverNames": [
+            "fis.bopen.bond",
+            "fitwo.bopen.bond",
+            "est.bopen.bond",
+            "est02.bopen.bond",
+            "est03.bopen.bond",
+            "estony.bopen.bond",
+            "sweet.bopen.bond",
+            "mskfb.bopen.bond"
+          ]
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "DIRECT",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "BLOCK",
+      "protocol": "blackhole"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "ip": [
+          "geoip:private"
+        ],
+        "type": "field",
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "geosite:private"
+        ],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "protocol": [
+          "bittorrent"
+        ],
+        "outboundTag": "BLOCK"
+      }
+    ]
+  }
+}
+
+Новые ноды который расположены в РФ, например, RUMSKSPLIT. Он тоже с selfsteal. Связывается с BRIDGE на EU ноды. EU ноды в целом обычные.
+
+{
+  "log": {
+    "loglevel": "info"
+  },
+  "inbounds": [
+    {
+      "tag": "RU_FULL_IN",
+      "port": 443,
+      "listen": "0.0.0.0",
+      "protocol": "vless",
+      "settings": {
+        "clients": [],
+        "decryption": "none"
+      },
+      "sniffing": {
+        "enabled": true,
+        "routeOnly": false,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic",
+          "fakedns"
+        ],
+        "metadataOnly": false
+      },
+      "streamSettings": {
+        "network": "raw",
+        "security": "reality",
+        "tcpSettings": {
+          "header": {
+            "type": "none"
+          },
+          "acceptProxyProtocol": false
+        },
+        "realitySettings": {
+          "dest": "9443",
+          "show": false,
+          "xver": 0,
+          "spiderX": "/",
+          "shortIds": [
+            ""
+          ],
+          "publicKey": "fkZTYNydTBVO-1LSiTvDcyBMx-zBP5Am780jECmUgg0",
+          "privateKey": "sheuiIBMLPLeNoEV5bJnzYUxjhtv5h1xo57OB1BbBGQ",
+          "fingerprint": "chrome",
+          "serverNames": [
+            "mskfb.bopen.bond"
+          ]
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "DIRECT",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "BLOCK",
+      "protocol": "blackhole"
+    },
+    {
+      "tag": "SS_OUTBOUND",
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "port": 9999,
+            "level": 0,
+            "method": "chacha20-ietf-poly1305",
+            "address": "93.152.207.69",
+            "password": "U8BfCAydYdUrBefzoYekUB04f-hRqWm1"
+          }
+        ]
+      }
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "ip": [
+          "geoip:private"
+        ],
+        "type": "field",
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "geosite:private"
+        ],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "protocol": [
+          "bittorrent"
+        ],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "inboundTag": [
+          "RU_FULL_IN"
+        ],
+        "outboundTag": "SS_OUTBOUND"
+      }
+    ]
+  }
+}
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "dns": {},
+  "inbounds": [
+    {
+      "tag": "BRIDGE_IN",
+      "port": 9999,
+      "listen": "0.0.0.0",
+      "protocol": "shadowsocks",
+      "settings": {
+        "clients": [],
+        "network": "tcp,udp"
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "DIRECT",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "BLOCK",
+      "protocol": "blackhole"
+    }
+  ],
+  "routing": {
+    "rules": []
+  }
+}
+
+Это основа которую я собираюсь расширять. Вот вопрос, как мне удобно балансировать, чего не хватает, что важно сделать. 
