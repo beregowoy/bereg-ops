@@ -509,7 +509,7 @@ def _get_inbound_uuids(profile_uuid: str) -> list:
 def _get_secret_key() -> str:
     """Generate a fresh APP_SECRET_KEY via /api/keygen/get."""
     req = urllib.request.Request(
-        f"{API_URL}/api/keygen/get",
+        f"{API_URL}/api/keygen",
         method="POST",
         headers={"Authorization": f"Bearer {API_TOKEN}", "Content-Type": "application/json"},
         data=b"{}",
