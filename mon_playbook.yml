@@ -1,0 +1,28 @@
+---
+- name: Configure base exporters
+  hosts:
+    - all
+  roles:
+    - monitoring_exporters
+  become: true
+  tags:
+    - exporters
+
+- name: Configure base exporters
+  hosts:
+    - monitoring
+  roles:
+    - monitoring
+  become: true
+  tags:
+    - monitoring
+      
+- name: Configure caddy
+  hosts:
+    - monitoring
+  roles:
+    - caddy
+  become: true
+  tags:
+    - caddy
+

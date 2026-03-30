@@ -1,0 +1,27 @@
+---
+- name: Configure ztnet
+  hosts:
+    - main_ztnet
+  roles:
+    - ztnet
+  become: true
+  tags:
+    - ztnet
+
+- name: Configure zerotier
+  hosts:
+    - all
+  roles:
+    - zerotier
+  become: true
+  tags:
+    - zerotier
+
+- name: Configure caddy
+  hosts:
+    - main_ztnet
+  roles:
+    - caddy
+  become: true
+  tags:
+    - caddy

@@ -1,0 +1,21 @@
+- name: Create exporters dir
+  file:
+    path: "{{ mon_host_install_path }}"
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+
+- name: Create docker compose
+  template:
+    src: docker-compose.yaml.j2
+    dest: "{{ mon_host_install_path }}/docker-compose.yaml"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Start compose file
+  community.docker.docker_compose_v2:
+    project_src: "{{ mon_host_install_path }}"
+    remove_orphans: true
+    state: present

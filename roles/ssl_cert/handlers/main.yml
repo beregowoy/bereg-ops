@@ -1,0 +1,5 @@
+- name: reload caddy
+  community.docker.docker_container_exec:
+    container: caddy-remnawave
+    command: caddy reload --config /etc/caddy/Caddyfile
+  ignore_errors: true

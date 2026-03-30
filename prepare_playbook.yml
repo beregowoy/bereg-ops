@@ -1,0 +1,28 @@
+---
+- name: Create user
+  hosts: all
+  vars_prompt:
+    - name: password
+      prompt: What is your password?
+
+  tasks:
+    - name: Create user
+      ansible.builtin.user:
+        name: "{{ default_user }}"
+        uid: 1000
+        shell: /bin/bash
+        group: sudo
+        append: yes
+        password: "{{ password | password_hash('sha512') }}"
+
+    - name: Set authorized key taken from file
+      ansible.posix.authorized_key:
+        user: "{{ default_user }}"
+        state: present
+        key: "https://github.com/{{ default_user }}.keys"
+
+    - name: Install sudo
+      apt: 
+        name: sudo
+        state: present
+        update_cache: yes

@@ -1,0 +1,9 @@
+---
+roles:
+  - name: geerlingguy.docker
+  - name: geerlingguy.firewall
+  - name: iphizic.remna-node
+  - name: iphizic.remna-server
+
+collections:
+  - name: devsec.hardening

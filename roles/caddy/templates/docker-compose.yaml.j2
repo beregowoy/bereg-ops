@@ -1,0 +1,32 @@
+services:
+    caddy:
+        image: caddy:2.10.0
+        restart: unless-stopped
+        container_name: caddy
+        hostname: caddy
+        ports: {{ caddy_ports }}
+        volumes:
+          - {{ caddy_install_path }}/Caddyfile:/etc/caddy/Caddyfile
+          - caddy-data:/data
+          - caddy-config:/config
+{% if caddy_network_config != None %}
+        networks:
+{% for key, value in caddy_network_config.items() %}
+          - {{ key }}
+{% endfor %}
+{% endif %}
+
+{% if caddy_network_config != None %}
+networks:
+{{ caddy_network_config | to_nice_yaml | indent(2, True)}}
+{% endif %}
+
+volumes:
+    caddy-data:
+        driver: local
+        external: false
+        name: caddy-data
+    caddy-config:
+        driver: local
+        external: false
+        name: caddy-config

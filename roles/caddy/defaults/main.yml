@@ -1,0 +1,10 @@
+caddy_install_path: /opt/caddy
+
+caddy_network_config:
+
+caddy_ports:
+  - "80:80"
+  - "443:443"
+  - "443:443/udp"
+
+caddy_custom_config: ""

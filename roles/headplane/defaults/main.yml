@@ -1,0 +1,3 @@
+headplaine_install_path: /opt/headplane
+#headplaine_hs_public_url: "https://headscale.example.com"
+headplaine_cookie_secret: "81f9d8bc9a82790cc917f5baa32fa6e6"

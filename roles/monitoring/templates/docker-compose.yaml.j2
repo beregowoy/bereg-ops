@@ -1,0 +1,53 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+    volumes:
+      - {{ mon_server_install_path }}/prometheus.yml:/etc/prometheus/prometheus.yml
+      - {{ mon_server_install_path }}/prom_data:/prometheus
+    networks:
+      - mon-network
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER={{ mon_server_grafana_user }}
+      - GF_SECURITY_ADMIN_PASSWORD={{ mon_server_grafana_password }}
+    volumes:
+      - {{ mon_server_install_path }}/grafana/datasources:/etc/grafana/provisioning/datasources
+      - {{ mon_server_install_path }}/grafana/dashboard:/etc/grafana/provisioning/dashboards
+      - {{ mon_server_install_path }}/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - mon-network
+
+  kuma:
+     restart: always
+     container_name: kuma
+     networks:
+       - mon-network
+     volumes:
+       - '{{ mon_server_install_path }}/uptime-kuma:/app/data'
+     image: 'louislam/uptime-kuma:{{ mon_server_kuma_tag }}'
+
+  xray-checker:
+     restart: always
+     container_name: xray-checker
+     environment:
+        SUBSCRIPTION_URL: {{ mon_server_subscription }}
+     networks:
+       - mon-network
+     image: 'kutovoys/xray-checker'
+
+networks:
+  mon-network:
+    name: mon-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.31.250.0/24

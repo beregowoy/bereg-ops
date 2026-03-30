@@ -1,0 +1,44 @@
+---
+- name: Add install directories
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+  with_items:
+    - "{{ headplaine_install_path }}"
+    - "{{ headplaine_install_path }}/headscale-config"
+    - "{{ headplaine_install_path }}/headplane-data"
+
+- name: Create headscale
+  template:
+    src: headscale.yaml.j2
+    dest: "{{ headplaine_install_path }}/headscale-config/config.yaml"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: restart services
+  
+- name: Create docker compose
+  template:
+    src: config.yaml.j2
+    dest: "{{ headplaine_install_path }}/config.yaml"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: restart services
+
+- name: Create docker compose
+  template:
+    src: docker-compose.yaml.j2
+    dest: "{{ headplaine_install_path }}/docker-compose.yaml"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Start compose file
+  community.docker.docker_compose_v2:
+    project_src: "{{ headplaine_install_path }}"
+    remove_orphans: true
+    state: present

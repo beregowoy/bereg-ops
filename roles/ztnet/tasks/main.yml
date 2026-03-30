@@ -1,0 +1,41 @@
+- name: Create ztnet dir
+  file:
+    path: "{{ ztnet_install_path }}"
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+
+- name: Add zerotier key for repo
+  shell: curl -s http://download.zerotier.com/contact%40zerotier.com.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/zerotier-debian-package-key.gpg > /dev/null
+  
+- name: File permissions
+  file:
+    path: /usr/share/keyrings/zerotier-debian-package-key.gpg
+    mode: 0644
+    state: file 
+
+- shell: curl -s https://install.zerotier.com | sudo bash
+
+- name: Create zerotier config
+  template:
+    src: local.conf.j2
+    dest: "/var/lib/zerotier-one/local.conf"
+    owner: zerotier-one
+    group: zerotier-one
+    mode: '0644'
+  notify: restart zerotier
+
+- name: Create docker compose
+  template:
+    src: docker-compose.yaml.j2
+    dest: "{{ ztnet_install_path }}/docker-compose.yaml"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Start compose file
+  community.docker.docker_compose_v2:
+    project_src: "{{ ztnet_install_path }}"
+    remove_orphans: true
+    state: present

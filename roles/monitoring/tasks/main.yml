@@ -1,0 +1,44 @@
+- name: Create install dir
+  file:
+    path: "{{ mon_server_install_path }}"
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+    
+- name: Create prometheus dir
+  file:
+    path: "{{ mon_server_install_path }}/prom_data"
+    owner: "65534"
+    group: "65534"
+    mode: "0700"
+    state: directory
+
+- name: Copy grafana data
+  copy:
+    src: grafana/
+    dest: "{{ mon_server_install_path }}/grafana/"
+  notify: restart services
+
+- name: Create prometheus config
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ mon_server_install_path }}/prometheus.yml"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart services
+
+- name: Create docker compose
+  template:
+    src: docker-compose.yaml.j2
+    dest: "{{ mon_server_install_path }}/docker-compose.yaml"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Start compose file
+  community.docker.docker_compose_v2:
+    project_src: "{{ mon_server_install_path }}"
+    remove_orphans: true
+    state: present

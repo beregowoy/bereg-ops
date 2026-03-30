@@ -1,0 +1,35 @@
+services:
+  headplane:
+    # I recommend you pin the version to a specific release
+    image: ghcr.io/tale/headplane:0.5.9
+    container_name: headplane
+    restart: unless-stopped
+    volumes:
+      - '{{ headplaine_install_path }}/config.yaml:/etc/headplane/config.yaml'
+      # This should match headscale.config_path in your config.yaml
+      - '{{ headplaine_install_path }}/headscale-config/config.yaml:/etc/headscale/config.yaml'
+
+      # Headplane stores its data in this directory
+      - '{{ headplaine_install_path }}/headplane-data:/var/lib/headplane'
+
+      # If you are using the Docker integration, mount the Docker socket
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+
+    networks:
+      - headscale-network
+  headscale:
+    image: headscale/headscale:0.25.1
+    container_name: headscale
+    restart: unless-stopped
+    command: serve
+    volumes:
+      - '{{ headplaine_install_path }}/headscale-data:/var/lib/headscale'
+      - '{{ headplaine_install_path }}/headscale-config:/etc/headscale'
+    networks:
+      - headscale-network
+
+networks:
+    headscale-network:
+        name: headscale-network
+        driver: bridge
+        external: false

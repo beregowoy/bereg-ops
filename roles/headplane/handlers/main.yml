@@ -1,0 +1,5 @@
+- name: restart services
+  community.docker.docker_compose_v2:
+    project_src: "{{ headplaine_install_path }}"
+    remove_orphans: true
+    state: restarted

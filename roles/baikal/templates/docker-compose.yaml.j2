@@ -1,0 +1,19 @@
+services:
+  baikal:
+    image: ckulka/baikal:nginx
+    restart: always
+    volumes:
+      - config:/var/www/baikal/config
+      - data:/var/www/baikal/Specific
+    networks:
+      - baikal-network
+
+networks:
+      baikal-network:
+        name: baikal-network
+        driver: bridge
+        external: false
+
+volumes:
+  config:
+  data:

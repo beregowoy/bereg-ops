@@ -1,0 +1,44 @@
+global:
+  # How frequently to scrape targets by default.
+  scrape_interval: 10s
+
+  # How long until a scrape request times out.
+  # It cannot be greater than the scrape interval.
+  scrape_timeout: 5s
+
+scrape_configs:
+  - job_name: "remna-metrics"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["{{ hostvars["central"].zaddres }}:3000"]
+    scrape_interval: 1m
+
+  - job_name: "xray-checker"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["xray-checker:2112"]
+    scrape_interval: 1m
+
+  - job_name: 'node_exporter'
+    scrape_interval: 30s
+    static_configs:
+{% for host in hostvars %}
+{% if host != "localhost" %}
+      - targets:
+          - {{ hostvars[host].zaddres }}:9100
+        labels:
+          nodename: {{ host }}
+{% endif %}
+{% endfor %}
+
+  - job_name: 'cadvisor'
+    scrape_interval: 30s
+    static_configs:
+{% for host in hostvars %}
+{% if host != "localhost" %}
+      - targets:
+          - {{ hostvars[host].zaddres }}:8080
+        labels:
+          instance: {{ host }}
+{% endif %}
+{% endfor %}

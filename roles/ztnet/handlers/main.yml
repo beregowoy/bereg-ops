@@ -1,0 +1,4 @@
+- name: restart zerotier
+  ansible.builtin.systemd_service:
+    name: zerotier-one
+    state: restarted

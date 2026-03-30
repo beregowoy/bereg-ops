@@ -1,0 +1,32 @@
+- name: Create SSL cert directory
+  file:
+    path: /etc/ssl/bopen.bond
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy fullchain cert
+  copy:
+    src: /etc/ssl/bopen.bond/fullchain.cer
+    dest: /etc/ssl/bopen.bond/fullchain.cer
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy private key
+  copy:
+    src: /etc/ssl/bopen.bond/cert.key
+    dest: /etc/ssl/bopen.bond/cert.key
+    owner: root
+    group: root
+    mode: '0600'
+  notify: reload caddy
+
+- name: Copy cert
+  copy:
+    src: /etc/ssl/bopen.bond/cert.cer
+    dest: /etc/ssl/bopen.bond/cert.cer
+    owner: root
+    group: root
+    mode: '0644'

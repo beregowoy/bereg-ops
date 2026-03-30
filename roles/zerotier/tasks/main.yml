@@ -1,0 +1,13 @@
+---
+- name: Add zerotier key for repo
+  shell: curl -s http://download.zerotier.com/contact%40zerotier.com.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/zerotier-debian-package-key.gpg > /dev/null
+  
+- name: File permissions
+  file:
+    path: /usr/share/keyrings/zerotier-debian-package-key.gpg
+    mode: 0644
+    state: file 
+
+- shell: curl -s https://install.zerotier.com | sudo bash
+
+- shell: zerotier-cli join {{ zerotier_network_id }}

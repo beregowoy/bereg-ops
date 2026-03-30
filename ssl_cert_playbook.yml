@@ -1,0 +1,6 @@
+---
+- name: Distribute wildcard SSL cert to nodes
+  hosts: remna_node
+  become: true
+  roles:
+    - ssl_cert
