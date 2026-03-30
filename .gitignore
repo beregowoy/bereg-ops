@@ -2,3 +2,4 @@
 out.txt
 ser.txt
 inventory/inventory.yml
+scripts/renew-cert.sh

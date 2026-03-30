@@ -1,0 +1,11 @@
+#!/bin/bash
+# Скопируй в ~/renew-cert.sh и подставь реальный CF_Token
+CF_Token='YOUR_CLOUDFLARE_API_TOKEN' \
+  ~/.acme.sh/acme.sh --renew -d '*.bopen.bond' --server letsencrypt 2>&1
+
+cp ~/.acme.sh/'*.bopen.bond_ecc'/'*.bopen.bond.cer' /etc/ssl/bopen.bond/cert.cer
+cp ~/.acme.sh/'*.bopen.bond_ecc'/'*.bopen.bond.key' /etc/ssl/bopen.bond/cert.key
+cp ~/.acme.sh/'*.bopen.bond_ecc'/fullchain.cer /etc/ssl/bopen.bond/fullchain.cer
+
+cd ~/bereg-ops && ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=no' \
+  ansible-playbook ssl_cert_playbook.yml >> /var/log/cert-renew.log 2>&1
