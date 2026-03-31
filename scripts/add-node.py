@@ -510,9 +510,8 @@ def _get_secret_key() -> str:
     """Generate a fresh APP_SECRET_KEY via /api/keygen/get."""
     req = urllib.request.Request(
         f"{API_URL}/api/keygen",
-        method="POST",
-        headers={"Authorization": f"Bearer {API_TOKEN}", "Content-Type": "application/json"},
-        data=b"{}",
+        method="GET",
+        headers={"Authorization": f"Bearer {API_TOKEN}"},
     )
     with urllib.request.urlopen(req, timeout=15) as r:
         result = json.loads(r.read())
