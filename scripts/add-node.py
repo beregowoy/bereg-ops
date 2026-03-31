@@ -574,9 +574,9 @@ def step_remnawave(name: str, ip: str, node_type: str) -> tuple:
 
 
 def _country(name: str) -> str:
-    parts = name.upper().split("-")
-    if parts and len(parts[0]) == 2 and parts[0].isalpha():
-        return parts[0]
+    for part in name.upper().split("-"):
+        if len(part) == 2 and part.isalpha():
+            return part
     return "XX"
 
 
