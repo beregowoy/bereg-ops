@@ -1,5 +1,6 @@
-- name: reload caddy
+- name: reload caddy-selfsteal
   community.docker.docker_container_exec:
-    container: caddy-remnawave
+    container: caddy-selfsteal
     command: caddy reload --config /etc/caddy/Caddyfile
+  become: yes
   ignore_errors: true

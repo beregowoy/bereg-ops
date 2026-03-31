@@ -5,6 +5,7 @@
     owner: root
     group: root
     mode: '0755'
+  become: yes
 
 - name: Copy fullchain cert
   copy:
@@ -13,6 +14,7 @@
     owner: root
     group: root
     mode: '0644'
+  become: yes
 
 - name: Copy private key
   copy:
@@ -21,7 +23,8 @@
     owner: root
     group: root
     mode: '0600'
-  notify: reload caddy
+  become: yes
+  notify: reload caddy-selfsteal
 
 - name: Copy cert
   copy:
@@ -30,3 +33,4 @@
     owner: root
     group: root
     mode: '0644'
+  become: yes
