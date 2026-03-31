@@ -386,6 +386,7 @@ SELFSTEAL_HTML = """\
 def step_selfsteal(ssh: SSH, domain: str) -> None:
     log("Deploy selfsteal (Caddy)", "section")
 
+    cert_dir = "/etc/ssl/bopen.bond"
     caddyfile = f"""\
 {{
     https_port {SELFSTEAL_PORT}
@@ -398,7 +399,7 @@ def step_selfsteal(ssh: SSH, domain: str) -> None:
             tls
         }}
     }}
-    auto_https disable_redirects
+    auto_https off
 }}
 
 http://{domain} {{
@@ -407,13 +408,14 @@ http://{domain} {{
 }}
 
 https://{domain} {{
+    tls {cert_dir}/fullchain.cer {cert_dir}/cert.key
     root * /var/www/html
     try_files {{path}} /index.html
     file_server
 }}
 
 :{SELFSTEAL_PORT} {{
-    tls internal
+    tls {cert_dir}/fullchain.cer {cert_dir}/cert.key
     respond 204
 }}
 
@@ -433,6 +435,7 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - /opt/html:/var/www/html:ro
+      - {cert_dir}:{cert_dir}:ro
       - ./logs:/var/log/caddy
       - caddy_data:/data
       - caddy_config:/config
