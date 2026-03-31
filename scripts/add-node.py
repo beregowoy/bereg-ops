@@ -586,9 +586,10 @@ def step_remnanode(ssh: SSH, secret_key: str) -> None:
     log("Deploy remnanode", "section")
 
     env_file = f"""\
-APP_SECRET_KEY={secret_key}
-SSL=true
+SECRET_KEY={secret_key}
+NODE_PORT={REMNANODE_PORT}
 PANEL_HOST_URL={API_URL}
+SSL=true
 """
 
     compose = """\
