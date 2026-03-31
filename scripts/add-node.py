@@ -469,21 +469,27 @@ def step_dns(ip: str, domain: str) -> None:
         with urllib.request.urlopen(req, timeout=15) as r:
             return json.loads(r.read())
 
-    # Check existing
+    # Check existing records for this domain
     resp = cf_req("GET", f"/zones/{CF_ZONE_ID}/dns_records?name={domain}&type=A")
     existing = resp.get("result", [])
 
-    record = {"type": "A", "name": domain, "content": ip, "ttl": 60, "proxied": False}
-    if existing:
-        rid = existing[0]["id"]
-        result = cf_req("PUT", f"/zones/{CF_ZONE_ID}/dns_records/{rid}", record)
-        action = "updated"
-    else:
-        result = cf_req("POST", f"/zones/{CF_ZONE_ID}/dns_records", record)
-        action = "created"
+    # If this exact IP already has a record — ensure proxy is off, done
+    for rec in existing:
+        if rec["content"] == ip:
+            if rec.get("proxied"):
+                cf_req("PATCH", f"/zones/{CF_ZONE_ID}/dns_records/{rec['id']}",
+                       {"proxied": False})
+                log(f"DNS record proxy disabled: {domain} A {ip}", "ok")
+            else:
+                log(f"DNS record already exists: {domain} A {ip}", "ok")
+            return
 
+    # New IP for this domain — always add (supports round-robin multi-A)
+    record = {"type": "A", "name": domain, "content": ip, "ttl": 60, "proxied": False}
+    result = cf_req("POST", f"/zones/{CF_ZONE_ID}/dns_records", record)
     if result.get("success"):
-        log(f"DNS record {action}: {domain} A {ip}", "ok")
+        total = len(existing) + 1
+        log(f"DNS record added: {domain} A {ip}  ({total} A-records total)", "ok")
     else:
         raise RuntimeError(f"CF DNS failed: {result.get('errors')}")
 
