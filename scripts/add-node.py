@@ -634,10 +634,11 @@ def step_harden_ssh(ssh: SSH) -> None:
     """)
     ssh.write_file(sshd_cfg, "/etc/ssh/sshd_config")
     ssh.run("mkdir -p /run/sshd && sshd -t")  # validate config
-    # Remove temporary port-22 UFW rule now that sshd will move to hardened port
-    ssh.run("ufw delete allow 22/tcp 2>/dev/null || true", check=False)
-    # Fire-and-forget restart — current session stays alive but new conns use new config
-    ssh.run("systemctl restart ssh || systemctl restart sshd || true", check=False, timeout=10)
+    # Fire-and-forget restart — connection drops, that's expected
+    try:
+        ssh.run("systemctl restart ssh || systemctl restart sshd || true", check=False, timeout=10)
+    except subprocess.TimeoutExpired:
+        pass  # Expected — SSH drops the connection when restarting
     log("SSH hardened", "ok")
 
 
@@ -652,6 +653,9 @@ def step_verify_key(ssh: SSH) -> None:
         if ssh.test_connection(timeout=10):
             out, _, _ = ssh.run("whoami", check=False)
             log(f"Connected as: {out} on port {SSH_HARDENED_PORT}", "ok")
+            # Only now close port 22 — SSH on new port is confirmed working
+            ssh.run("ufw delete allow 22/tcp 2>/dev/null || true", check=False)
+            log("Port 22 closed in UFW", "ok")
             return
         time.sleep(3)
 
