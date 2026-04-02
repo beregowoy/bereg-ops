@@ -386,7 +386,8 @@ SELFSTEAL_HTML = """\
 def step_selfsteal(ssh: SSH, domain: str) -> None:
     log("Deploy selfsteal (Caddy)", "section")
 
-    cert_dir = "/etc/ssl/bopen.bond"
+    base_domain = ".".join(domain.split(".")[-2:])
+    cert_dir = f"/etc/ssl/{base_domain}"
     caddyfile = f"""\
 {{
     https_port {SELFSTEAL_PORT}
@@ -443,6 +444,22 @@ volumes:
   caddy_data:
   caddy_config:
 """
+
+    ssh.run(f"mkdir -p {cert_dir}")
+    for fname in ["fullchain.cer", "cert.key"]:
+        local_path = os.path.join(cert_dir, fname)
+        try:
+            result = subprocess.run(["sudo", "cat", local_path], capture_output=True, timeout=10)
+            if result.returncode == 0 and result.stdout:
+                b64 = base64.b64encode(result.stdout).decode()
+                ssh.run(f"echo '{b64}' | base64 -d > {cert_dir}/{fname}")
+                if fname.endswith(".key"):
+                    ssh.run(f"chmod 600 {cert_dir}/{fname}")
+                log(f"Deployed {fname} to {cert_dir}/", "ok")
+            else:
+                log(f"WARNING: {local_path} not found on ops", "warn")
+        except Exception as e:
+            log(f"WARNING: could not read {local_path}: {e}", "warn")
 
     ssh.run("mkdir -p /opt/selfsteal/logs /opt/html")
     ssh.write_file(SELFSTEAL_HTML, "/opt/html/index.html")
@@ -630,7 +647,8 @@ volumes:
 def step_harden_ssh(ssh: SSH) -> None:
     log(f"Harden SSH (port {SSH_HARDENED_PORT}, key-only, no root)", "section")
 
-    sshd_cfg = textwrap.dedent(f"""\
+    sshd_cfg = textwrap.dedent(f"""\\
+        Port 22
         Port {SSH_HARDENED_PORT}
         PermitRootLogin no
         PasswordAuthentication no
@@ -643,15 +661,27 @@ def step_harden_ssh(ssh: SSH) -> None:
         Subsystem sftp /usr/lib/openssh/sftp-server
     """)
     ssh.write_file(sshd_cfg, "/etc/ssh/sshd_config")
-    ssh.run("mkdir -p /run/sshd && sshd -t")  # validate config
-    # Fire-and-forget restart — connection drops, that's expected
+    ssh.run("mkdir -p /run/sshd && sshd -t")
+
+    # Ubuntu 24.04: disable ssh.socket, use ssh.service
+    ssh.run(
+        "systemctl disable ssh.socket 2>/dev/null; "
+        "systemctl stop ssh.socket 2>/dev/null; "
+        "systemctl enable ssh.service 2>/dev/null; true",
+        check=False,
+    )
+
     try:
-        ssh.run("systemctl restart ssh || systemctl restart sshd || true", check=False, timeout=10)
+        ssh.run(
+            "systemctl restart ssh.service 2>/dev/null || "
+            "systemctl restart sshd 2>/dev/null || true",
+            check=False, timeout=15,
+        )
     except subprocess.TimeoutExpired:
-        pass  # Expected — SSH drops the connection when restarting
-    log("SSH hardened", "ok")
+        pass
 
-
+    time.sleep(3)
+    log(f"SSH hardened (transition: ports 22 + {SSH_HARDENED_PORT})", "ok")
 # ─── Step 12: Verify key connection ──────────────────────────────────────────
 
 def step_verify_key(ssh: SSH) -> None:
@@ -663,16 +693,37 @@ def step_verify_key(ssh: SSH) -> None:
         if ssh.test_connection(timeout=10):
             out, _, _ = ssh.run("whoami", check=False)
             log(f"Connected as: {out} on port {SSH_HARDENED_PORT}", "ok")
-            # Only now close port 22 — SSH on new port is confirmed working
-            ssh.run("ufw delete allow 22/tcp 2>/dev/null || true", check=False)
-            log("Port 22 closed in UFW", "ok")
+
+            final_cfg = textwrap.dedent(f"""\\
+                Port {SSH_HARDENED_PORT}
+                PermitRootLogin no
+                PasswordAuthentication no
+                PubkeyAuthentication yes
+                ChallengeResponseAuthentication no
+                UsePAM yes
+                X11Forwarding no
+                PrintMotd no
+                AcceptEnv LANG LC_*
+                Subsystem sftp /usr/lib/openssh/sftp-server
+            """)
+            b64 = base64.b64encode(final_cfg.encode()).decode()
+            ssh.run(f"echo '{b64}' | base64 -d | sudo tee /etc/ssh/sshd_config > /dev/null", check=False)
+
+            try:
+                ssh.run(
+                    "sudo systemctl restart ssh.service 2>/dev/null || "
+                    "sudo systemctl restart sshd 2>/dev/null; "
+                    "sudo ufw delete allow 22/tcp 2>/dev/null; true",
+                    check=False, timeout=15,
+                )
+            except subprocess.TimeoutExpired:
+                pass
+            log(f"Port 22 removed, only {SSH_HARDENED_PORT} active", "ok")
             return
         time.sleep(3)
 
-    log("Could not verify ansible key connection — check manually", "warn")
+    log("Could not verify ansible key - port 22 left open for safety", "warn")
     log(f"  ssh -i {ANSIBLE_KEY_FILE} -p {SSH_HARDENED_PORT} ansible@{ssh.ip}", "warn")
-
-
 # ─── Step 13: Prometheus & Whitebox ──────────────────────────────────────────
 
 def step_prometheus(ip: str, name: str) -> None:
