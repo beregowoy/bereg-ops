@@ -647,7 +647,7 @@ volumes:
 def step_harden_ssh(ssh: SSH) -> None:
     log(f"Harden SSH (port {SSH_HARDENED_PORT}, key-only, no root)", "section")
 
-    sshd_cfg = textwrap.dedent(f"""\\
+    sshd_cfg = textwrap.dedent(f"""\
         Port 22
         Port {SSH_HARDENED_PORT}
         PermitRootLogin no
@@ -694,7 +694,7 @@ def step_verify_key(ssh: SSH) -> None:
             out, _, _ = ssh.run("whoami", check=False)
             log(f"Connected as: {out} on port {SSH_HARDENED_PORT}", "ok")
 
-            final_cfg = textwrap.dedent(f"""\\
+            final_cfg = textwrap.dedent(f"""\
                 Port {SSH_HARDENED_PORT}
                 PermitRootLogin no
                 PasswordAuthentication no
